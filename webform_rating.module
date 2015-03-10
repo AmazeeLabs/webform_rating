@@ -1,0 +1,218 @@
+<?php
+
+/**
+ * @file
+ *  Implements a rating system for nodes using webforms.
+ */
+
+define('WEBFORM_RATING_ACCESS_DENY', 'deny');
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function webform_rating_form_node_type_form_alter(&$form, $form_state) {
+  $checkbox_field = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable webform rating functionality'),
+    '#description' => t('Allows this webform to behave like a rating webform, meaning that the submissions will be attached to a node.'),
+    '#weight' => 10,
+    '#default_value' => variable_get('webform_rating_node_' . $form['#node_type']->type, FALSE),
+    '#states' => array(
+      'enabled' => array(
+        ':input[name="webform_node"]' => array('checked' => TRUE),
+      ),
+      'visible' => array(
+        ':input[name="webform_node"]' => array('checked' => TRUE),
+      )
+    ),
+    '#attributes' => array(
+      'data-enabled-description' => t('Rating enabled'),
+      'data-disabled-description' => t('Rating disabled'),
+    ),
+  );
+
+  // Create the setting field for what node types can be rated.
+  $node_types = node_type_get_types();
+  $node_type_options = array();
+  foreach ($node_types as $node_type) {
+    $node_type_options[$node_type->type] = $node_type->name;
+  }
+  $node_types_field = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Which node types can be rated?'),
+    '#options' => $node_type_options,
+    '#default_value' => variable_get('webform_rating_node_types_' . $form['#node_type']->type, array()),
+    '#weight' => 11,
+    '#states' => array(
+      'enabled' => array(
+        ':input[name="webform_rating_node"]' => array('checked' => TRUE),
+      ),
+      'visible' => array(
+        ':input[name="webform_rating_node"]' => array('checked' => TRUE),
+      )
+    ),
+  );
+  // In case the webform fieldset is not there, we show the field separately.
+  if (!empty($form['webform'])) {
+    $form['webform']['webform_rating_node'] = $checkbox_field;
+    $form['webform']['webform_rating_node_types'] = $node_types_field;
+  }
+  else {
+    $form['webform_rating_node'] = $checkbox_field;
+    $form['webform_rating_node_types'] = $node_types_field;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function webform_rating_permission() {
+  $node_types = node_type_get_types();
+  $permissions = array();
+  foreach ($node_types as $node_type) {
+    $permissions['rate ' . $node_type->type . ' content'] = array(
+      'title' => t('Rate !content_type content', array('!content_type' => $node_type->name)),
+    );
+  }
+  return $permissions;
+}
+
+/**
+ * Checks if an user has access to rate a node.
+ *
+ * @param object $target_node
+ *  The target node to rate.
+ *
+ * @param object $account
+ *  Optional, the user account to be checked for access. By default it is the
+ *  current logged in user.
+ *
+ * @param boolean $reset
+ *  Flag if we should reset the internal static cache.
+ */
+function webform_rating_user_has_rating_access($target_node, $account = NULL, $reset = FALSE) {
+  if (empty($account)) {
+    global $user;
+    $account = clone $user;
+  }
+  $access = &drupal_static(__FUNCTION__, array());
+  if (!isset($access[$target_node->nid][$account->uid]) || !empty($reset)) {
+    // By default, we set it to false.
+    $access[$target_node->nid][$account->uid] = FALSE;
+
+    // First, the user must have view access for the target node.
+    if (node_access('view', $target_node, $account)) {
+      $access[$target_node->nid][$account->uid] = user_access('rate ' . $target_node->type . ' content');
+      // If the user has the basic access to rate the node, we give a chance to
+      // other modules to alter the access.
+      if ($access[$target_node->nid][$account->uid]) {
+        $modules_access = module_invoke_all('webform_rating_rating_access', $target_node, $account);
+        if (!empty($modules_access)) {
+          foreach ($modules_access as $value) {
+            // If one module specifically denies the access, we deny it.
+            if ($value === WEBFORM_RATING_ACCESS_DENY) {
+              $access[$target_node->nid][$account->uid] = FALSE;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  return $access[$target_node->nid][$account->uid];
+}
+
+/**
+ * Loads a webform rating row by its sid.
+ *
+ * @param int $sid
+ *  The webform submission id.
+ */
+function webform_rating_load_by_sid($sid) {
+  return db_select('webform_rating_nodes', 'wrn')->fields('wrn')->condition('wrn.sid', $sid)->execute()->fetch();
+}
+
+/**
+ * Saves a rating object into the database.
+ *
+ * @param object $rating
+ *  An object that maps over the {webform_rating_nodes} table.
+ */
+function webform_rating_save_rating($rating) {
+  $primary_keys = !empty($rating->is_new) ? array() : array('sid');
+  drupal_write_record('webform_rating_nodes', $rating, $primary_keys);
+}
+
+/**
+ * Helper function to check if the rating functionality is enabled for a node
+ * type.
+ *
+ * @param string $node_type
+ *  The node type.
+ */
+function webform_rating_is_enabled($node_type) {
+  return variable_get('webform_rating_node_' . $node_type, FALSE);
+}
+
+/**
+ * Helper function to check if a certain webform type can be used to rate a
+ * certain node (target) node type.
+ *
+ * @param string $webform_node_type
+ *  The node type of the webform.
+ *
+ * @param string $target_node_type
+ *  The node type of the target.
+ */
+function webform_rating_can_rate_node_type($webform_node_type, $target_node_type) {
+  if (in_array($target_node_type, variable_get('webform_rating_node_types_' . $webform_node_type, array()))) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function webform_rating_form_webform_component_edit_form_alter(&$form, &$form_state) {
+  // We alter only the select elements, and only if we enabled the rating
+  // functionality for this content type.
+  if (webform_rating_is_enabled($form['#node']->type) && $form['type']['#value'] == 'select') {
+    WebformRatingEditComponent::webformComponentEditFormAlter($form, $form_state);
+  }
+}
+
+/**
+ * Additional validation handler for the component edit form.
+ */
+function webform_rating_form_webform_component_edit_form_validate(&$form, &$form_state) {
+  WebformRatingEditComponent::webformCcomponentEditFormValidate($form, $form_state);
+}
+
+/**
+ * Ajax callback for the update operation of the items form element in the edit
+ * component form.
+ *
+ * @see WebformRatingEditComponent::webformComponentEditFormAlter().
+ */
+function webform_rating_webform_component_items_rating_update($form, $form_state) {
+  // All we have to do is basically to return the udpated items_rating form
+  // element.
+  return $form['extra']['items_rating'];
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function webform_rating_form_webform_client_form_alter(&$form, &$form_state) {
+  if (webform_rating_is_enabled($form['#node']->type)) {
+    WebformRatingClientForm::webformClientFormAlter($form, $form_state);
+  }
+}
+
+/**
+ * Additional submit handler for the webform client form.
+ */
+function webform_rating_webform_client_form_submit(&$form, &$form_state) {
+  WebformRatingClientForm::webformClientFormSubmit($form, $form_state);
+}

@@ -1,0 +1,58 @@
+<?php
+
+/**
+ * @file
+ *  Install file for the Webform rating module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function webform_rating_schema() {
+  $schema['webform_rating_nodes'] = array(
+    'description' => 'Stores the relation and some details between a subsmission and a node.',
+    'fields' => array(
+      'sid' => array(
+        'description' => 'The unique identifier for the submission.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'webform_nid' => array(
+        'description' => 'The node identifier of the webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'target_nid' => array(
+        'description' => 'The node identifier of the node being rated.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'questions_answered' => array(
+        'description' => 'How many questions have answers.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rating' => array(
+        'description' => 'The current rating value.',
+        'type' => 'float',
+        'size' => 'big',
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('sid'),
+    'indexes' => array(
+      'webform_nid' => array('webform_nid'),
+      'target_nid' => array('target_nid')
+    ),
+  );
+
+  return $schema;
+}

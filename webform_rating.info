@@ -1,0 +1,7 @@
+name = Webform Rating
+description = Implements a rating system for nodes using webforms.
+core = 7.x
+dependencies[] = webform
+
+files[] = includes/WebformRatingEditComponent.inc
+files[] = includes/WebformRatingClientForm.inc
