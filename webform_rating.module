@@ -133,6 +133,19 @@ function webform_rating_load_by_sid($sid) {
 }
 
 /**
+ * Returns an array of ratings by a set of conditions.
+ */
+function webform_rating_load_by_conditions($conditions = array()) {
+  $query = db_select('webform_rating_nodes', 'wrn')->fields('wrn');
+  if (!empty($conditions)) {
+    foreach ($conditions as $key => $value) {
+      $query->condition('wrn.' . $key, $value);
+    }
+  }
+  return $query->execute()->fetchAll();
+}
+
+/**
  * Saves a rating object into the database.
  *
  * @param object $rating
@@ -141,6 +154,58 @@ function webform_rating_load_by_sid($sid) {
 function webform_rating_save_rating($rating) {
   $primary_keys = !empty($rating->is_new) ? array() : array('sid');
   drupal_write_record('webform_rating_nodes', $rating, $primary_keys);
+}
+
+/**
+ * Implements hook_webform_submission_delete().
+ */
+function webform_rating_webform_submission_delete($node, $submission) {
+  // When a submission is deleted, delete also the rating.
+  db_delete('webform_rating_nodes')->condition('sid', $submission->sid)->execute();
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function webform_rating_module_implements_alter(&$implementations, $hook) {
+  // Our module should be called last with this hook.
+  if ($hook == 'forms') {
+    // We want to completely overwrite the hook_forms() from the webform module.
+    // At the moment it declares only one form callback there, but if this will
+    // change, we have to change our hook_forms() too.
+    if (isset($implementations['webform'])) {
+      unset($implementations['webform']);
+    }
+  }
+}
+
+/**
+ * Implements hook_forms().
+ */
+function webform_rating_forms($form_id) {
+  $forms = array();
+  // We overwrite the client form so that we can easily prefill a few values
+  // before calling the main form constructor.
+  if (strpos($form_id, 'webform_client_form_') === 0) {
+    $forms[$form_id]['callback'] = 'webform_rating_client_form';
+  }
+  return $forms;
+}
+
+/**
+ * Form constructor for a client webform. It overwrites the webform_client_form()
+ * in webform_rating_forms(), but it defaults in the end to the same base form
+ * id, so all the alter functions will work.
+ */
+function webform_rating_client_form($form, &$form_state, $node, $submission = FALSE, $is_draft = FALSE, $filter = TRUE) {
+  return WebformRatingClientForm::webformClientForm($form, $form_state, $node, $submission, $is_draft, $filter);
+}
+
+/**
+ * Additional submit handler for the webform client form.
+ */
+function webform_rating_webform_client_form_submit(&$form, &$form_state) {
+  WebformRatingClientForm::webformClientFormSubmit($form, $form_state);
 }
 
 /**
@@ -199,20 +264,4 @@ function webform_rating_webform_component_items_rating_update($form, $form_state
   // All we have to do is basically to return the udpated items_rating form
   // element.
   return $form['extra']['items_rating'];
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function webform_rating_form_webform_client_form_alter(&$form, &$form_state) {
-  if (webform_rating_is_enabled($form['#node']->type)) {
-    WebformRatingClientForm::webformClientFormAlter($form, $form_state);
-  }
-}
-
-/**
- * Additional submit handler for the webform client form.
- */
-function webform_rating_webform_client_form_submit(&$form, &$form_state) {
-  WebformRatingClientForm::webformClientFormSubmit($form, $form_state);
 }

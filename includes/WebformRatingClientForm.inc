@@ -12,36 +12,69 @@
 class WebformRatingClientForm {
 
   /**
-   * Helper method for the hook_form_FORM_ID_alter() for webform_client_form()
+   * Helper method for the webform_rating_client_form().
    */
-  public static function webformClientFormAlter(&$form, &$form_state) {
-    // Try to get the target node id and if it is empty, we do not show the
-    // form.
-    $target_nid = WebformRatingClientForm::getTargetNidFromContext($form);
-    if (empty($target_nid)) {
-      $form['#access'] = FALSE;
-      drupal_set_message(t('The target content id for the rating could not be determined. Please contact the site administrator.'), 'warning');
-      return;
-    }
-
-    // Also, check that the user can really rate the target.
-    $rating_access = WebformRatingClientForm::checkTargetRatingAccess($target_nid, $form['#node']->type);
-    if ($rating_access !== TRUE) {
-      $form['#access'] = FALSE;
-      if (!empty($rating_access['error_message'])) {
-        drupal_set_message($rating_access['error_message'], 'warning');
+  public static function webformClientForm($form, &$form_state, $node, $submission = FALSE, $is_draft = FALSE, $filter = TRUE) {
+    global $user;
+    // We still want to keep the old base form id, otherwise no form alters will
+    // work anymore.
+    $form_state['build_info']['base_form_id'] = 'webform_client_form';
+    if (webform_rating_is_enabled($node->type)) {
+      $context = array('webform' => $node);
+      if (!empty($submission)) {
+        $context['submission'] = $submission;
       }
-      return;
-    }
+      $target_nid = WebformRatingClientForm::getTargetNidFromContext($context);
 
-    // If we are here, the user can rate and we can put the target node id in
-    // the form.
-    $form['rating_target_nid'] = array(
-      '#type' => 'value',
-      '#value' => $target_nid,
-    );
-    // Add our submit handler to the form.
-    $form['#submit'][] = 'webform_rating_webform_client_form_submit';
+      // @todo: Maybe think to some other better solution to hide the entire
+      // form.
+      if (empty($target_nid)) {
+        $form['#access'] = FALSE;
+        drupal_set_message(t('The target content id for the rating could not be determined. Please contact the site administrator.'), 'warning');
+        return;
+      }
+
+      // Also, check that the user can really rate the target.
+      $rating_access = WebformRatingClientForm::checkTargetRatingAccess($target_nid, $node->type);
+      if ($rating_access !== TRUE) {
+        $form['#access'] = FALSE;
+        if (!empty($rating_access['error_message'])) {
+          drupal_set_message($rating_access['error_message'], 'warning');
+        }
+        return;
+      }
+
+      // Try to see if the user already has a rating for this target. If yes, we
+      // will just load that submission.
+      $ratings = webform_rating_load_by_conditions(array('uid' => !empty($submission) ? $submission->uid : $user->uid, 'target_nid' => $target_nid, 'webform_nid' => $node->nid));
+      if (!empty($ratings)) {
+        $rating = reset($ratings);
+        $submission = webform_menu_submission_load($rating->sid, $node->nid);
+      }
+      // If we are here, even if we have a submission, we force to a new one,
+      // because it means we want to submit the same webform but for another
+      // target. And by default, the webform module will load the draft
+      // submission if an user has one, preventing an user to have more drafts
+      // for the same webform. In our case, it is OK to have.
+      else {
+        $submission = FALSE;
+      }
+
+      // And now just load the default form and then add our fields.
+      $form = webform_client_form($form, $form_state, $node, $submission, $is_draft, $filter);
+
+      $form['rating_target_nid'] = array(
+        '#type' => 'value',
+        '#value' => $target_nid,
+      );
+      // Add our submit handler to the form.
+      $form['#submit'][] = 'webform_rating_webform_client_form_submit';
+
+      return $form;
+    }
+    else {
+      return webform_client_form($form, $form_state, $node, $submission, $is_draft, $filter);
+    }
   }
 
   /**
@@ -54,6 +87,7 @@ class WebformRatingClientForm {
       if (empty($rating)) {
         $rating = new stdClass();
         $rating->sid = $submission->sid;
+        $rating->uid = $submission->uid;
         $rating->is_new = TRUE;
       }
       $rating->webform_nid = $form_state['values']['details']['nid'];
@@ -71,26 +105,30 @@ class WebformRatingClientForm {
    * subsmission from the form, if exists, otherwise it will search for it
    * in the global $_REQUEST.
    *
-   * @param array $form
-   *  A entire form, usually this is a webform_client_form().
+   * @param array $context
+   *  A an array which can contain a 'webform' node and/or a 'submission'. In
+   *  case of a submision it will try to load the data from the
+   *  webform_rating_nodes table.
    *
    * @return int|NULL
    *  The target node id if found, NULL otherwise.
    */
-  public static function getTargetNidFromContext(&$form) {
+  public static function getTargetNidFromContext($context = array()) {
     $target_nid = NULL;
-    // Search first in the global $_REQUEST.
-    if (!empty($_REQUEST['rating_' . $form['#node']->nid])) {
-      $target_nid = $_REQUEST['rating_' . $form['#node']->nid];
+
+    // If we have the target in the request, we return it directly.
+    if (!empty($context['webform']) && !empty($_REQUEST['rating_' . $context['webform']->nid])) {
+      return $_REQUEST['rating_' . $context['webform']->nid];
     }
 
-    // If we have a submission, then we overwrite the target nid if possible.
-    if (!empty($form['details']['sid']['#value'])) {
-      $rating = webform_rating_load_by_sid($form['details']['sid']['#value']);
+    // Search for a target node id in the submission, if available.
+    if (!empty($context['submission'])) {
+      $rating = webform_rating_load_by_sid($context['submission']->sid);
       if (!empty($rating)) {
         $target_nid = $rating->target_nid;
       }
     }
+
     return $target_nid;
   }
 
