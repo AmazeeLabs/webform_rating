@@ -67,6 +67,12 @@ class WebformRatingClientForm {
         '#type' => 'value',
         '#value' => $target_nid,
       );
+      $target_node = node_load($target_nid);
+      $form['submitted']['target_node_title'] = array(
+        '#type' => 'item',
+        '#markup' => t('Input your rating for !node_title', array('!node_title' => l($target_node->title, 'node/' . $target_node->nid))),
+        '#weight' => -50,
+      );
       // Add our submit handler to the form.
       $form['#submit'][] = 'webform_rating_webform_client_form_submit';
 
@@ -119,6 +125,11 @@ class WebformRatingClientForm {
     // If we have the target in the request, we return it directly.
     if (!empty($context['webform']) && !empty($_REQUEST['rating_' . $context['webform']->nid])) {
       return $_REQUEST['rating_' . $context['webform']->nid];
+    }
+
+    // We also try to load the target if we are on a page like: node/nid/rate.
+    if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'rate') {
+      return arg(1);
     }
 
     // Search for a target node id in the submission, if available.
