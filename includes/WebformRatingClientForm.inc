@@ -92,22 +92,7 @@ class WebformRatingClientForm {
     }
     if (!empty($form_state['values']['details']['sid'])) {
       $submission = webform_menu_submission_load($form_state['values']['details']['sid'], $form_state['values']['details']['nid']);
-      $rating = webform_rating_load_by_sid($submission->sid);
-      if (empty($rating)) {
-        $rating = new stdClass();
-        $rating->sid = $submission->sid;
-        $rating->uid = $submission->uid;
-        $rating->is_new = TRUE;
-      }
-      $rating->webform_nid = $form_state['values']['details']['nid'];
-      $rating->target_nid = $form_state['values']['rating_target_nid'];
-      $rating->rating = WebformRating::getScore($submission);
-
-      // @todo: Compute these values.
-      $rating->questions_answered = 0;
-
-      // And save the rating.
-      webform_rating_save_rating($rating);
+      WebformRating::updateRatingFromSubmission($form_state['values']['rating_target_nid'], $submission);
     }
   }
 

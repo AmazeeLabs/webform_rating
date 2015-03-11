@@ -97,6 +97,9 @@ class WebformRating {
   public static function getPointsPerComponent($submission, $rating_components) {
     $points_per_component = array();
     foreach ($submission->data as $component_id => $answer_values) {
+      if (empty($rating_components[$component_id])) {
+        continue;
+      }
       $component_score = 0;
       $items_rating = $rating_components[$component_id]['extra']['items_rating'];
       foreach ($answer_values as $option_key) {
@@ -166,5 +169,72 @@ class WebformRating {
     }
 
     return $components_weight;
+  }
+
+  /**
+   * Returns the set of components which were filled in.
+   *
+   * @param object $submission
+   *  The webform submission object.
+   *
+   * @param array $rating_components
+   *  An array with all the rating components. Typically, it is the components
+   *  array from the WebformRating::getRatingComponents().
+   *
+   * @return array
+   *  An subset of the $rating_components which have submitted values.
+   */
+  public static function getFilledComponents($submission, $rating_components) {
+    $filled_in_components = array();
+    foreach ($rating_components as $component_id => $component) {
+      // A component is filled in if it has at least one value in the submission
+      // and that value is not the empty string.
+      // Although in our case, we should always have arrays (because we handle
+      // only select elements) make sure that we have an array here.
+      if (!empty($submission->data[$component_id]) && is_array($submission->data[$component_id])) {
+        $is_empty = TRUE;
+        foreach ($submission->data[$component_id] as $value) {
+          if ($value !== '' && !is_null($value)) {
+            $is_empty = FALSE;
+            break;
+          }
+        }
+        if (!$is_empty) {
+          $filled_in_components[$component_id] = $component;
+        }
+      }
+    }
+    return $filled_in_components;
+  }
+
+  /**
+   * Updates the rating of a target node for a submission.
+   *
+   * @param object $submission
+   *  The webform submission.
+   *
+   * @param int $target_nid
+   *  The id of the target node.
+   *
+   * @return object|FALSE
+   *  If the operation succeded, it will return the rating object, otherwise it
+   *  will return FALSE.
+   */
+  public static function updateRatingFromSubmission($target_nid, $submission) {
+    $webform_node = node_load($submission->nid);
+    $rating = webform_rating_load_by_sid($submission->sid);
+    if (empty($rating)) {
+      $rating = new stdClass();
+      $rating->sid = $submission->sid;
+      $rating->is_new = TRUE;
+    }
+    $rating->uid = $submission->uid;
+    $rating->webform_nid = $submission->nid;
+    $rating->target_nid = $target_nid;
+    $rating->rating = WebformRating::getScore($submission);
+    $rating->questions_answered = count(WebformRating::getFilledComponents($submission, WebformRating::getRatingComponents($webform_node->webform['components'])));
+
+    // And save the rating.
+    return webform_rating_save_rating($rating);
   }
 }

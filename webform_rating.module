@@ -153,7 +153,8 @@ function webform_rating_load_by_conditions($conditions = array()) {
  */
 function webform_rating_save_rating($rating) {
   $primary_keys = !empty($rating->is_new) ? array() : array('sid');
-  drupal_write_record('webform_rating_nodes', $rating, $primary_keys);
+  $update = drupal_write_record('webform_rating_nodes', $rating, $primary_keys);
+  return ($update !== FALSE) ? $rating : FALSE;
 }
 
 /**
