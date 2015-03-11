@@ -36,14 +36,14 @@ class WebformRatingEditComponent {
     // Get an array of options out of the formatted string.
     $options = _webform_select_options_from_text($items_value, TRUE);
     $weight = $form['extra']['items']['#weight'];
+    $form['extra']['items_rating'] = array(
+      '#type' => 'fieldset',
+      '#prefix' => '<div id="items_rating">',
+      '#suffix' => '</div>',
+      '#title' => t('Rating points')
+    );
     if (!empty($options)) {
       $component = $form_state['build_info']['args'][1];
-      $form['extra']['items_rating'] = array(
-        '#type' => 'fieldset',
-        '#prefix' => '<div id="items_rating">',
-        '#suffix' => '</div>',
-        '#title' => t('Rating points')
-      );
       foreach ($options as $key => $value) {
         $weight += 0.01;
         $field_title = t('Points for %option: ', array('%option' => $value));
