@@ -35,7 +35,7 @@ class WebformRatingClientForm {
       }
 
       // Also, check that the user can really rate the target.
-      $rating_access = WebformRatingClientForm::checkTargetRatingAccess($target_nid, $node->type);
+      $rating_access = WebformRating::checkTargetRatingAccess($target_nid, $node);
       if ($rating_access !== TRUE) {
         $form['#access'] = FALSE;
         if (!empty($rating_access['error_message'])) {
@@ -133,41 +133,4 @@ class WebformRatingClientForm {
     return $target_nid;
   }
 
-  /**
-   * Checks if a target can be rated by an account using a specific webform type.
-   *
-   * @param int $target_nid
-   *  The target node id to check.
-   *
-   * @param string $webform_node_type
-   *  The webform node type for which to check the access.
-   *
-   * @param object $account
-   *  Optional, the user account for which to check the access. By default is
-   *  the logged in user.
-   *
-   * @return array $result|TRUE
-   *  TRUE if the user has access, or an array with a error message if the user
-   *  does not have access.
-   */
-  public static function checkTargetRatingAccess($target_nid, $webform_node_type, $account = NULL) {
-    // Check that the target node is valid.
-    $target_node = node_load($target_nid);
-    if (empty($target_node)) {
-      return array('access' => FALSE, 'error_message' => t('The target content for the rating could not be loaded. Please contact the site administrator.'));
-    }
-
-    // Check if we can rate this type of nodes using the type of the webform;
-    if (!webform_rating_can_rate_node_type($webform_node_type, $target_node->type)) {
-      return array('access' => FALSE, 'error_message' => t('You are not allowed to rate this type of content. Please contact the site administrator.'));
-    }
-
-    // The last check: make sure that the user has access to rate the target.
-    if (!webform_rating_user_has_rating_access($target_node, $account)) {
-      return array('access' => FALSE, 'error_message' => t('You are not allowed to rate the content.'));
-    }
-
-    // If we are here, the user is allowed to rate.
-    return TRUE;
-  }
 }

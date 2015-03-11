@@ -16,7 +16,7 @@ $plugin = array(
   'callback' => 'webform_rating_rate_access_check',
   'settings form' => 'webform_rating_rate_access_check_settings',
   'summary' => 'webform_rating_rate_access_check_summary',
-  'required context' => array(new ctools_context_required(t('Target Content'), 'node'), new ctools_context_required(t('Webform'), 'node')),
+  'required context' => array(new ctools_context_required(t('Target Content'), 'node'), new ctools_context_optional(t('Webform'), 'node')),
 );
 
 /**
@@ -32,12 +32,31 @@ function webform_rating_rate_access_check_settings(&$form, &$form_state, $conf) 
  * Check for access.
  */
 function webform_rating_rate_access_check($conf, $context) {
-  return FALSE;
+  $access = FALSE;
+  if (!empty($context[0]->data)) {
+    $target_nid = $context[0]->data->nid;
+    if (!empty($context[1]->data)) {
+      $webform_nid = $context[1]->data->nid;
+    }
+    else {
+      $webform_nid = variable_get('webform_rating_default_form', FALSE);
+    }
+    if (!empty($target_nid) && !empty($webform_nid)) {
+      $webform = node_load($webform_nid);
+      if (WebformRating::checkTargetRatingAccess($target_nid, $webform) === TRUE) {
+        $access = TRUE;
+      }
+    }
+  }
+  return $access;
 }
 
 /**
  * Provide a summary description based upon the checked roles.
  */
 function webform_rating_rate_access_check_summary($conf, $context) {
-  return 'Some summary';
+  if ($context[1]->type == 'any') {
+    return t('User can rate "@target" using the default rating form', array('@target' => $context[0]->identifier));
+  }
+  return t('User can rate "@target" using the form in "@webform"', array('@target' => $context[0]->identifier, '@webform' => $context[1]->identifier));
 }

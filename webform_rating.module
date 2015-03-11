@@ -83,6 +83,9 @@ function webform_rating_permission() {
  * @param object $target_node
  *  The target node to rate.
  *
+ * @param object $webform_node
+ *  The webform node used for rating.
+ *
  * @param object $account
  *  Optional, the user account to be checked for access. By default it is the
  *  current logged in user.
@@ -90,7 +93,7 @@ function webform_rating_permission() {
  * @param boolean $reset
  *  Flag if we should reset the internal static cache.
  */
-function webform_rating_user_has_rating_access($target_node, $account = NULL, $reset = FALSE) {
+function webform_rating_user_has_rating_access($target_node, $webform_node, $account = NULL, $reset = FALSE) {
   if (empty($account)) {
     global $user;
     $account = clone $user;
@@ -106,7 +109,7 @@ function webform_rating_user_has_rating_access($target_node, $account = NULL, $r
       // If the user has the basic access to rate the node, we give a chance to
       // other modules to alter the access.
       if ($access[$target_node->nid][$account->uid]) {
-        $modules_access = module_invoke_all('webform_rating_rating_access', $target_node, $account);
+        $modules_access = module_invoke_all('webform_rating_rating_access', $target_node, $webform_node, $account);
         if (!empty($modules_access)) {
           foreach ($modules_access as $value) {
             // If one module specifically denies the access, we deny it.
@@ -231,7 +234,7 @@ function webform_rating_is_enabled($node_type) {
  *  The node type of the target.
  */
 function webform_rating_can_rate_node_type($webform_node_type, $target_node_type) {
-  if (in_array($target_node_type, variable_get('webform_rating_node_types_' . $webform_node_type, array()))) {
+  if (webform_rating_is_enabled($webform_node_type)  && in_array($target_node_type, variable_get('webform_rating_node_types_' . $webform_node_type, array()))) {
     return TRUE;
   }
   return FALSE;

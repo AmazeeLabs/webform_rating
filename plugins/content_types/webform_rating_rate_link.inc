@@ -35,18 +35,21 @@ $plugin = array(
 function webform_rating_rate_link_render($subtype, $conf, $args, $context) {
   $block = new stdClass();
   if (!empty($context[0]->data)) {
-    $targe_nid = $context[0]->data->nid;
+    $target_nid = $context[0]->data->nid;
     if (!empty($context[1]->data)) {
       $webform_nid = $context[1]->data->nid;
     }
     else {
       $webform_nid = variable_get('webform_rating_default_form', FALSE);
     }
-    if (!empty($targe_nid) && !empty($webform_nid)) {
-      // @todo: we must also check the access here!
-      $block->content = l(t('Rate it'), 'node/' . $targe_nid . '/rate/' . $webform_nid);
+    if (!empty($target_nid) && !empty($webform_nid)) {
+      $webform = node_load($webform_nid);
+      if (WebformRating::checkTargetRatingAccess($target_nid, $webform) === TRUE) {
+        $block->content = l(t('Rate it'), 'node/' . $target_nid . '/rate/' . $webform_nid);
+      }
     }
   }
+
   return $block;
 }
 
