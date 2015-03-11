@@ -45,7 +45,7 @@ function webform_rating_rate_link_render($subtype, $conf, $args, $context) {
     if (!empty($target_nid) && !empty($webform_nid)) {
       $webform = node_load($webform_nid);
       if (WebformRating::checkTargetRatingAccess($target_nid, $webform) === TRUE) {
-        $block->content = l(t('Rate it'), 'node/' . $target_nid . '/rate/' . $webform_nid);
+        $block->content = l(t('Rate it'), 'node/' . $target_nid . '/rate/' . $webform_nid, array('query' => drupal_get_destination()));
       }
     }
   }
