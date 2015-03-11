@@ -64,6 +64,30 @@ function webform_rating_form_node_type_form_alter(&$form, $form_state, $form_id)
 }
 
 /**
+ * Implements hook_menu().
+ */
+function webform_rating_menu() {
+  $items['node/%webform_menu/webform/update_scores'] = array(
+    'title' => 'Re-calculate scores',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('webform_rating_recalculate_form', 1),
+    'access callback' => 'webform_rating_recalculate_access',
+    'access arguments' => array(1),
+    'file' => 'webform_rating.admin.inc',
+    'weight' => 10,
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+/**
+ * Menu access callback for the recalculation of the webform score.
+ */
+function webform_rating_recalculate_access($webform) {
+  return (webform_rating_is_enabled($webform->type) && webform_node_update_access($webform));
+}
+
+/**
  * Implements hook_permission().
  */
 function webform_rating_permission() {
