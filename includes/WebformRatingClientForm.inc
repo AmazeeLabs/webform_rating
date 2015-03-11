@@ -87,6 +87,9 @@ class WebformRatingClientForm {
    * Helper method for the webform_rating_webform_client_form_submit().
    */
   public static function webformClientFormSubmit(&$form, &$form_state) {
+    if (empty($form_state['save_draft']) && empty($form_state['webform_completed'])) {
+      return;
+    }
     if (!empty($form_state['values']['details']['sid'])) {
       $submission = webform_menu_submission_load($form_state['values']['details']['sid'], $form_state['values']['details']['nid']);
       $rating = webform_rating_load_by_sid($submission->sid);
@@ -98,10 +101,12 @@ class WebformRatingClientForm {
       }
       $rating->webform_nid = $form_state['values']['details']['nid'];
       $rating->target_nid = $form_state['values']['rating_target_nid'];
+      $rating->rating = WebformRating::getScore($submission);
+
       // @todo: Compute these values.
       $rating->questions_answered = 0;
-      $rating->rating = 1;
 
+      // And save the rating.
       webform_rating_save_rating($rating);
     }
   }

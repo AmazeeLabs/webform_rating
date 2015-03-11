@@ -68,13 +68,13 @@ class WebformRatingEditComponent {
       'speed' => 'slow',
     );
 
-    // Add the weight of the question.
-    $form['extra']['question_weight'] = array(
+    // Add the weight of the component.
+    $form['extra']['component_weight'] = array(
       '#type' => 'textfield',
       '#size' => 3,
-      '#title' => t('Question weight'),
-      '#description' => t('Please input the question weight, which is a number between 0 and 100 representing the percentage of how important is this question within the entire set of questions of this webform.'),
-      '#default_value' => isset($component['extra']['question_weight']) ? $component['extra']['question_weight'] : '',
+      '#title' => t('Weight'),
+      '#description' => t('Please input the component weight, which is a number between 0 and 100 representing the percentage of how important is this component within the entire set of components of this webform.'),
+      '#default_value' => isset($component['extra']['component_weight']) ? $component['extra']['component_weight'] : '',
       '#field_suffix' => '%',
     );
 
@@ -94,10 +94,10 @@ class WebformRatingEditComponent {
       }
     }
     // Validate the weight, if any.
-    $question_weight = trim($form_state['values']['extra']['question_weight']);
-    form_set_value($form['extra']['question_weight'], $question_weight, $form_state);
-    if ($question_weight !== '' && (!is_numeric($question_weight) || $question_weight < 0 || $question_weight > 100)) {
-      form_error($form['extra']['question_weight'], t('The weight value is incorrect, it must be a number between 0 and 100.'));
+    $component_weight = trim($form_state['values']['extra']['component_weight']);
+    form_set_value($form['extra']['component_weight'], $component_weight, $form_state);
+    if ($component_weight !== '' && (!is_numeric($component_weight) || $component_weight < 0 || $component_weight > 100)) {
+      form_error($form['extra']['component_weight'], t('The weight value is incorrect, it must be a number between 0 and 100.'));
     }
   }
 }
