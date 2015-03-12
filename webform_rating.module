@@ -339,6 +339,16 @@ function webform_rating_ctools_plugin_directory($module, $plugin) {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function webform_rating_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'webform_rating') . '/includes/views',
+  );
+}
+
+/**
  * Helper function to return the webform nid from an optional context.
  *
  * If there is a value in the context, it will return it, otherwise it will

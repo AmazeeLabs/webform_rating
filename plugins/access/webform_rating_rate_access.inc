@@ -2,8 +2,8 @@
 
 /**
  * @file
- * Plugin to provide access control/visibility based on length of
- * simplecontext argument (in URL).
+ * Plugin to provide access control/visibility if the user has access to rate a
+ * target node using a webform.
  */
 
 /**
