@@ -15,7 +15,7 @@ $plugin = array(
   'single' => TRUE,
   'render callback' => 'webform_rating_rate_link_render',
   'required context' => array(new ctools_context_required(t('Target Content'), 'node'), new ctools_context_optional(t('Webform'), 'node')),
-  'category' => array(t('Custom'), -9),
+  'category' => array(t('Webform'), -9),
   'edit form' => 'webform_rating_rate_link_settings_form',
 );
 
@@ -36,12 +36,7 @@ function webform_rating_rate_link_render($subtype, $conf, $args, $context) {
   $block = new stdClass();
   if (!empty($context[0]->data)) {
     $target_nid = $context[0]->data->nid;
-    if (!empty($context[1]->data)) {
-      $webform_nid = $context[1]->data->nid;
-    }
-    else {
-      $webform_nid = variable_get('webform_rating_default_form', FALSE);
-    }
+    $webform_nid = webform_rating_get_webform_nid_from_optional_context($context[1]);
     if (!empty($target_nid) && !empty($webform_nid)) {
       $webform = node_load($webform_nid);
       if (WebformRating::checkTargetRatingAccess($target_nid, $webform) === TRUE) {

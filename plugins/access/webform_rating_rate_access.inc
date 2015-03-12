@@ -35,12 +35,7 @@ function webform_rating_rate_access_check($conf, $context) {
   $access = FALSE;
   if (!empty($context[0]->data)) {
     $target_nid = $context[0]->data->nid;
-    if (!empty($context[1]->data)) {
-      $webform_nid = $context[1]->data->nid;
-    }
-    else {
-      $webform_nid = variable_get('webform_rating_default_form', FALSE);
-    }
+    $webform_nid = webform_rating_get_webform_nid_from_optional_context($context[1]);
     if (!empty($target_nid) && !empty($webform_nid)) {
       $webform = node_load($webform_nid);
       if (WebformRating::checkTargetRatingAccess($target_nid, $webform) === TRUE) {

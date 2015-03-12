@@ -337,3 +337,26 @@ function webform_rating_ctools_plugin_directory($module, $plugin) {
     return 'plugins/' . $plugin;
   }
 }
+
+/**
+ * Helper function to return the webform nid from an optional context.
+ *
+ * If there is a value in the context, it will return it, otherwise it will
+ * return the default webform nid from the system.
+ *
+ * @param object $context
+ *  A ctools context object.
+ *
+ * @return int|FALSE
+ *  If we have a webform node id in the context or in the system, it will return
+ *  it, otherwise it will return FALSE;
+ */
+function webform_rating_get_webform_nid_from_optional_context($context) {
+  if (!empty($context->data)) {
+    $webform_nid = $context->data->nid;
+  }
+  else {
+    $webform_nid = variable_get('webform_rating_default_form', FALSE);
+  }
+  return $webform_nid;
+}
