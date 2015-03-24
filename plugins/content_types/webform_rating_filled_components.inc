@@ -37,7 +37,7 @@ function webform_rating_filled_components_render($subtype, $conf, $args, $contex
   if (!empty($context[0]->data) && !empty($context[1]->data)) {
     $target_nid = $context[0]->data->nid;
     $account_uid = $context[1]->data->uid;
-    $webform_nid = webform_rating_get_webform_nid_from_optional_context($context[2]);
+    $webform_nid = webform_rating_get_webform_nid_from_optional_context($context[2], $context[0]->data);
     if (!empty($target_nid) && !empty($account_uid) && !empty($webform_nid)) {
       // Get all the total rating components, so that we can calculate the
       // total number of them.

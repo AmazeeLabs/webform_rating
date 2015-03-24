@@ -123,22 +123,22 @@ function webform_rating_user_has_rating_access($target_node, $webform_node, $acc
     $account = clone $user;
   }
   $access = &drupal_static(__FUNCTION__, array());
-  if (!isset($access[$target_node->nid][$account->uid]) || !empty($reset)) {
+  if (!isset($access[$target_node->nid][$webform_node->nid][$account->uid]) || !empty($reset)) {
     // By default, we set it to false.
-    $access[$target_node->nid][$account->uid] = FALSE;
+    $access[$target_node->nid][$webform_node->nid][$account->uid] = FALSE;
 
     // First, the user must have view access for the target node.
     if (node_access('view', $target_node, $account)) {
-      $access[$target_node->nid][$account->uid] = user_access('rate ' . $target_node->type . ' content');
+      $access[$target_node->nid][$webform_node->nid][$account->uid] = user_access('rate ' . $target_node->type . ' content');
       // If the user has the basic access to rate the node, we give a chance to
       // other modules to alter the access.
-      if ($access[$target_node->nid][$account->uid]) {
+      if ($access[$target_node->nid][$webform_node->nid][$account->uid]) {
         $modules_access = module_invoke_all('webform_rating_rating_access', $target_node, $webform_node, $account);
         if (!empty($modules_access)) {
           foreach ($modules_access as $value) {
             // If one module specifically denies the access, we deny it.
             if ($value === WEBFORM_RATING_ACCESS_DENY) {
-              $access[$target_node->nid][$account->uid] = FALSE;
+              $access[$target_node->nid][$webform_node->nid][$account->uid] = FALSE;
               break;
             }
           }
@@ -146,7 +146,7 @@ function webform_rating_user_has_rating_access($target_node, $webform_node, $acc
       }
     }
   }
-  return $access[$target_node->nid][$account->uid];
+  return $access[$target_node->nid][$webform_node->nid][$account->uid];
 }
 
 /**
@@ -357,16 +357,29 @@ function webform_rating_views_api() {
  * @param object $context
  *  A ctools context object.
  *
+ * @param object $target_node
+ *  Optionally, a target node for which to check the webform nid.
+ *
  * @return int|FALSE
  *  If we have a webform node id in the context or in the system, it will return
  *  it, otherwise it will return FALSE;
  */
-function webform_rating_get_webform_nid_from_optional_context($context) {
+function webform_rating_get_webform_nid_from_optional_context($context, $target_node = NULL) {
   if (!empty($context->data)) {
-    $webform_nid = $context->data->nid;
+    return $context->data->nid;
   }
   else {
-    $webform_nid = variable_get('webform_rating_default_form', FALSE);
+    $webform_nids = &drupal_static(__FUNCTION__, array());
+    $key = !empty($target_node) ? $target_node->nid : 'default';
+    if (!isset($webform_nids[$key])) {
+      $webform_nids[$key] = module_invoke_all('webform_rating_default_form', $target_node);
+      if (empty($webform_nids[$key])) {
+        $webform_nids[$key] = variable_get('webform_rating_default_form', FALSE);
+      }
+      else {
+        $webform_nids[$key] = reset($webform_nids[$key]);
+      }
+    }
+    return $webform_nids[$key];
   }
-  return $webform_nid;
 }

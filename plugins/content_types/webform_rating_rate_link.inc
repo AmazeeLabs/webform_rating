@@ -36,7 +36,7 @@ function webform_rating_rate_link_render($subtype, $conf, $args, $context) {
   $block = new stdClass();
   if (!empty($context[0]->data)) {
     $target_nid = $context[0]->data->nid;
-    $webform_nid = webform_rating_get_webform_nid_from_optional_context($context[1]);
+    $webform_nid = webform_rating_get_webform_nid_from_optional_context($context[1], $context[0]->data);
     if (!empty($target_nid) && !empty($webform_nid)) {
       $webform = node_load($webform_nid);
       if (WebformRating::checkTargetRatingAccess($target_nid, $webform) === TRUE) {
