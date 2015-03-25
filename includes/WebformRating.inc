@@ -73,8 +73,9 @@ class WebformRating {
     $rating_components = array();
     foreach ($webform_components as $key => $component) {
       // We consider as rating components all the components which are 'select'
-      // and have rating setting for the items. This may change in the future.
-      if ($component['type'] == 'select' && !empty($component['extra']['items_rating'])) {
+      // and have rating setting for the items. Also, we check that the
+      // rating_component checkbox is not empty.
+      if ($component['type'] == 'select' && !empty($component['extra']['items_rating']) && !empty($component['extra']['rating_component'])) {
         $rating_components[$key] = $component;
       }
     }
