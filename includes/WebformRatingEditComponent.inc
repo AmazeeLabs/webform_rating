@@ -76,16 +76,6 @@ class WebformRatingEditComponent {
       'speed' => 'slow',
     );
 
-    // Add the weight of the component.
-    $form['extra']['component_weight'] = array(
-      '#type' => 'textfield',
-      '#size' => 3,
-      '#title' => t('Weight'),
-      '#description' => t('Please input the component weight, which is a number between 0 and 100 representing the percentage of how important is this component within the entire set of components of this webform.'),
-      '#default_value' => isset($component['extra']['component_weight']) ? $component['extra']['component_weight'] : '',
-      '#field_suffix' => '%',
-    );
-
     $form['#validate'][] = 'webform_rating_form_webform_component_edit_form_validate';
   }
 
@@ -100,12 +90,6 @@ class WebformRatingEditComponent {
           form_error($form['extra']['items_rating'][$key], t('The number of points must be numeric and not smaller than 0!'));
         }
       }
-    }
-    // Validate the weight, if any.
-    $component_weight = trim($form_state['values']['extra']['component_weight']);
-    form_set_value($form['extra']['component_weight'], $component_weight, $form_state);
-    if ($component_weight !== '' && (!is_numeric($component_weight) || $component_weight < 0 || $component_weight > 100)) {
-      form_error($form['extra']['component_weight'], t('The weight value is incorrect, it must be a number between 0 and 100.'));
     }
   }
 }
