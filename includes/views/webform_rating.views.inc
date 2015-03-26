@@ -113,8 +113,8 @@ function webform_rating_views_data() {
       'field' => 'sid',
     ),
     'node' => array(
-      'left_field' => 'target_nid',
-      'field' => 'nid',
+      'left_field' => 'nid',
+      'field' => 'target_nid',
     ),
   );
 

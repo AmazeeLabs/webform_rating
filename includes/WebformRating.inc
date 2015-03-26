@@ -171,7 +171,11 @@ class WebformRating {
     $rating->questions_answered = count(WebformRating::getFilledComponents($submission, WebformRating::getRatingComponents($webform_node->webform['components'], FALSE)));
 
     // And save the rating.
-    return webform_rating_save_rating($rating);
+    $update = webform_rating_save_rating($rating);
+    if ($update !== FALSE) {
+      module_invoke_all('webform_rating_update', $rating);
+    }
+    return $update;
   }
 
   /**
