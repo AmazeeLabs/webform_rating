@@ -51,18 +51,27 @@ class WebformRating {
    *  An array with all the webform components. Typically, it is the components
    *  array from the webform node ($webform->webform['components']);
    *
+   * @param int $include_not_count
+   *  If we should include the components that should not count for the total
+   *  amount of rating components.
+   *
    * @return array
    *  A subset of the $webform_components which should be taken into
    *  consideration when calculating the rating.
    */
-  public static function getRatingComponents($webform_components) {
+  public static function getRatingComponents($webform_components, $include_not_count = TRUE) {
     $rating_components = array();
     foreach ($webform_components as $key => $component) {
       // We consider as rating components all the components which are 'select'
       // and have rating setting for the items. Also, we check that the
       // rating_component checkbox is not empty.
       if ($component['type'] == 'select' && !empty($component['extra']['items_rating']) && !empty($component['extra']['rating_component'])) {
-        $rating_components[$key] = $component;
+        // We count the component if either we include the components event if
+        // they should not count for the total, or if the component does
+        // actually count for the total.
+        if (!empty($include_not_count) || !empty($component['extra']['rating_component_count'])) {
+          $rating_components[$key] = $component;
+        }
       }
     }
     return $rating_components;
@@ -159,7 +168,7 @@ class WebformRating {
     $rating->webform_nid = $submission->nid;
     $rating->target_nid = $target_nid;
     $rating->rating = WebformRating::getScore($submission);
-    $rating->questions_answered = count(WebformRating::getFilledComponents($submission, WebformRating::getRatingComponents($webform_node->webform['components'])));
+    $rating->questions_answered = count(WebformRating::getFilledComponents($submission, WebformRating::getRatingComponents($webform_node->webform['components'], FALSE)));
 
     // And save the rating.
     return webform_rating_save_rating($rating);

@@ -68,6 +68,15 @@ class WebformRatingEditComponent {
       '#default_value' => isset($component['extra']['rating_component']) ? $component['extra']['rating_component'] : TRUE,
     );
 
+    // Add the checkbox to set if the component should count for the total
+    // components.
+    $form['extra']['rating_component_count'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Should this count as a rating component?'),
+      '#description' => t('If this is checked, this form element will also count for the total rating components.'),
+      '#default_value' => isset($component['extra']['rating_component_count']) ? $component['extra']['rating_component_count'] : TRUE,
+    );
+
     // Add the ajax behavior on the items textarea.
     $form['extra']['items']['#ajax'] = array(
       'callback' => 'webform_rating_webform_component_items_rating_update',

@@ -42,7 +42,7 @@ function webform_rating_filled_components_render($subtype, $conf, $args, $contex
       // Get all the total rating components, so that we can calculate the
       // total number of them.
       $webform = node_load($webform_nid);
-      $total_components = WebformRating::getRatingComponents($webform->webform['components']);
+      $total_components = WebformRating::getRatingComponents($webform->webform['components'], FALSE);
       // Search for a rating.
       $rating = webform_rating_load_by_conditions(array('uid' => $account_uid, 'target_nid' => $target_nid, 'webform_nid' => $webform_nid));
       $filled_in = 0;
