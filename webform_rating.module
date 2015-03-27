@@ -364,8 +364,8 @@ function webform_rating_views_api() {
  *  If we have a webform node id in the context or in the system, it will return
  *  it, otherwise it will return FALSE;
  */
-function webform_rating_get_webform_nid_from_optional_context($context, $target_node = NULL) {
-  if (!empty($context->data)) {
+function webform_rating_get_webform_nid_from_optional_context($context = NULL, $target_node = NULL) {
+  if (!empty($context) && !empty($context->data)) {
     return $context->data->nid;
   }
   else {
