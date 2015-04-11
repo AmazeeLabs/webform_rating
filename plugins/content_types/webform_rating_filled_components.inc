@@ -52,7 +52,7 @@ function webform_rating_filled_components_render($subtype, $conf, $args, $contex
         $rating = reset($rating);
         $filled_in = $rating->questions_answered;
       }
-      $block->content = t('!filled_in_components out of !total_components fields filled in.', array('!filled_in_components' => $filled_in, '!total_components' => count($total_components)));
+      $block->content = t('!filled_in_components out of !total_components areas evaluated.', array('!filled_in_components' => $filled_in, '!total_components' => count($total_components)));
     }
   }
 
