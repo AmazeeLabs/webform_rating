@@ -383,3 +383,28 @@ function webform_rating_get_webform_nid_from_optional_context($context = NULL, $
     return $webform_nids[$key];
   }
 }
+
+/**
+ * Implements hook_webform_results_download_submission_information_info_alter().
+ */
+function webform_rating_webform_results_download_submission_information_info_alter(&$submission_information) {
+  $submission_information['webformrating_target_title'] = t('Rated content');
+}
+
+/**
+ * Implements hook_webform_results_download_submission_information_data().
+ */
+function webform_rating_webform_results_download_submission_information_data($token, $submission, $options, $serial_start, $row_count) {
+  switch($token) {
+    case 'webformrating_target_title':
+      $rating = webform_rating_load_by_sid($submission->sid);
+      if (isset($rating->target_nid)) {
+        // try to load the node and return it's title
+        $target_node = node_load($rating->target_nid);
+        if (isset($target_node->title)) {
+          return $target_node->title;
+        }
+      }
+      break;
+  }
+}
