@@ -75,6 +75,9 @@ class WebformRatingClientForm {
       );
       // Add our submit handler to the form.
       $form['#submit'][] = 'webform_rating_webform_client_form_submit';
+      if (!empty($form['actions']['submit'])) {
+        $form['actions']['submit']['#value'] = t('Save');
+      }
 
       return $form;
     }
