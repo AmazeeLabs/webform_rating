@@ -68,9 +68,10 @@ class WebformRatingClientForm {
         '#value' => $target_nid,
       );
       $target_node = node_load($target_nid);
+      $node_link = l($target_node->title, 'node/' . $target_node->nid, array('attributes' => array('target'=>'_blank')));
       $form['submitted']['target_node_title'] = array(
         '#type' => 'item',
-        '#markup' => t('Input your rating for !node_title', array('!node_title' => l($target_node->title, 'node/' . $target_node->nid))),
+        '#markup' => t('Input your rating for !node_title', array('!node_title' => $node_link)),
         '#weight' => -50,
       );
       // Add our submit handler to the form.
