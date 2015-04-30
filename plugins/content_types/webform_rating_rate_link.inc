@@ -40,7 +40,23 @@ function webform_rating_rate_link_render($subtype, $conf, $args, $context) {
     if (!empty($target_nid) && !empty($webform_nid)) {
       $webform = node_load($webform_nid);
       if (WebformRating::checkTargetRatingAccess($target_nid, $webform) === TRUE) {
-        $block->content = l(t('Rate it'), 'node/' . $target_nid . '/rate/' . $webform_nid, array('query' => drupal_get_destination(), 'attributes' => array('class' => array('call-to-action'))));
+        global $user;
+        $total_components = WebformRating::getRatingComponents($webform->webform['components'], FALSE);
+        $rating = webform_rating_load_by_conditions(array('uid' => $user->uid, 'target_nid' => $target_nid, 'webform_nid' => $webform_nid));
+        if (!empty($rating)) {
+          $rating = reset($rating);
+        }
+        $classes = array('call-to-action');
+        // If the user completed the rating, then use a different title for the
+        // link and add an additional class.
+        if (!empty($rating) && count($total_components) == $rating->questions_answered) {
+          $classes[] = 'rating-completed';
+          $link_title = t('Edit');
+        }
+        else {
+          $link_title = t('Rate it');
+        }
+        $block->content = l($link_title, 'node/' . $target_nid . '/rate/' . $webform_nid, array('query' => drupal_get_destination(), 'attributes' => array('class' => $classes)));
       }
     }
   }
