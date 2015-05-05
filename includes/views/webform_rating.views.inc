@@ -107,6 +107,16 @@ function webform_rating_views_data() {
     ),
   );
 
+  // Link to rate.
+  $data['webform_rating_nodes']['table']['entity type'] = 'node';
+  $data['webform_rating_nodes']['rate_link'] = array(
+    'field' => array(
+      'title' => t('Rate link'),
+      'help' => t('Provide a simple link to rate a node.'),
+      'handler' => 'webform_rating_handler_rate_link',
+    ),
+  );
+
   $data['webform_rating_nodes']['table']['join'] = array(
     'webform_submissions' => array(
       'left_field' => 'sid',
