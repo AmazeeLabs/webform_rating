@@ -120,12 +120,18 @@ function webform_rating_permission() {
 function webform_rating_user_has_rating_access($target_node, $webform_node, $account = NULL, $reset = FALSE) {
   if (empty($account)) {
     global $user;
-    $account = clone $user;
+    $account = user_load($user->uid);
   }
   $access = &drupal_static(__FUNCTION__, array());
   if (!isset($access[$target_node->nid][$webform_node->nid][$account->uid]) || !empty($reset)) {
     // By default, we set it to false.
     $access[$target_node->nid][$webform_node->nid][$account->uid] = FALSE;
+
+    // If the user is an admin, then we allow to rate.
+    if (user_access('administer site configuration', $account)) {
+      $access[$target_node->nid][$webform_node->nid][$account->uid] = TRUE;
+      return TRUE;
+    }
 
     // First, the user must have view access for the target node.
     if (node_access('view', $target_node, $account)) {
