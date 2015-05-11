@@ -414,3 +414,10 @@ function webform_rating_webform_results_download_submission_information_data($to
       break;
   }
 }
+
+/**
+ * Options list callback for the views integration (for the uid filter).
+ */
+function webform_rating_rating_author_options() {
+  return array('***CURRENT_USER***' => t('Current logged in user'));
+}

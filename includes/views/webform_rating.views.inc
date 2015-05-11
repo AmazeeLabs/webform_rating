@@ -44,6 +44,25 @@ function webform_rating_views_data() {
     ),
   );
 
+  $data['webform_rating_nodes']['uid'] = array(
+    'title' => t('Rating user id'),
+    'help' => t('The author of the rating.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_in_operator',
+      'options callback' => 'webform_rating_rating_author_options',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+
   // The target node id.
   $data['webform_rating_nodes']['target_nid'] = array(
     'title' => t('Target node'),
@@ -114,6 +133,15 @@ function webform_rating_views_data() {
       'title' => t('Rate link'),
       'help' => t('Provide a simple link to rate a node.'),
       'handler' => 'webform_rating_handler_rate_link',
+    ),
+  );
+
+  // Rating status.
+  $data['webform_rating_nodes']['rate_status'] = array(
+    'field' => array(
+      'title' => t('Rate status'),
+      'help' => t('Shows a rated/unrated string, depending if the user rated.'),
+      'handler' => 'webform_rating_handler_rate_status',
     ),
   );
 
