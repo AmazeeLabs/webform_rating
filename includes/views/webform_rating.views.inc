@@ -107,6 +107,25 @@ function webform_rating_views_data() {
     ),
   );
 
+  // The number of total questions.
+  $data['webform_rating_nodes']['total_questions'] = array(
+    'title' => t('Total questions'),
+    'help' => t('Total questions'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+
   // The rating.
   $data['webform_rating_nodes']['rating'] = array(
     'title' => t('Rating'),
@@ -150,11 +169,30 @@ function webform_rating_views_data() {
       'left_field' => 'sid',
       'field' => 'sid',
     ),
-    'node' => array(
-      'left_field' => 'nid',
-      'field' => 'target_nid',
-    ),
   );
 
   return $data;
+}
+
+function webform_rating_views_data_alter(&$data) {
+  // Joins
+  $data['node']['table']['join']['webform_rating_nodes'] = array(
+    'left_field' => 'target_nid',
+    'field' => 'nid',
+  );
+  // The webform rating relationship.
+  $data['node']['rating_submission'] = array(
+    'group' => t('Rating submission'),
+    'title' => t('Rating submission'),
+    'relationship' => array(
+      'title' => t('Rating submission'),
+      'help' => t('The rating of the submission.'),
+      'base' => 'webform_rating_nodes',
+      'base field' => 'target_nid',
+      'relationship table' => 'node',
+      'relationship field' => 'nid',
+      'handler' => 'views_handler_relationship_webform_rating',
+      'label' => t('Rating submission'),
+    ),
+  );
 }

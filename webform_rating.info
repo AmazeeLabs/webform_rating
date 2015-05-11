@@ -8,3 +8,4 @@ files[] = includes/WebformRatingClientForm.inc
 files[] = includes/WebformRating.inc
 files[] = includes/views/webform_rating_handler_rate_link.inc
 files[] = includes/views/webform_rating_handler_rate_status.inc
+files[] = includes/views/views_handler_relationship_webform_rating.inc

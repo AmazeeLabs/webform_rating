@@ -10,7 +10,7 @@
  *
  * @ingroup views_field_handlers
  */
-class webform_rating_handler_rate_link extends views_handler_field_entity {
+class webform_rating_handler_rate_link extends views_handler_field {
 
   function construct() {
     parent::construct();
@@ -21,6 +21,9 @@ class webform_rating_handler_rate_link extends views_handler_field_entity {
     $options['text'] = array('default' => '', 'translatable' => TRUE);
     $options['destination'] = array('default' => FALSE, 'bool' => TRUE);
     return $options;
+  }
+
+  public function query() {
   }
 
   function options_form(&$form, &$form_state) {
@@ -40,8 +43,10 @@ class webform_rating_handler_rate_link extends views_handler_field_entity {
   }
 
   function render($values) {
-    if ($entity = $this->get_value($values)) {
-      return $this->render_link($entity, $values);
+    // @todo: we have to find a better solution for this.
+    if (!empty($values->nid)) {
+      $node = node_load($values->nid);
+      return $this->render_link($node, $values);
     }
   }
 

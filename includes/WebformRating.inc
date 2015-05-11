@@ -168,7 +168,9 @@ class WebformRating {
     $rating->webform_nid = $submission->nid;
     $rating->target_nid = $target_nid;
     $rating->rating = WebformRating::getScore($submission);
-    $rating->questions_answered = count(WebformRating::getFilledComponents($submission, WebformRating::getRatingComponents($webform_node->webform['components'], FALSE)));
+    $rating_components = WebformRating::getRatingComponents($webform_node->webform['components'], FALSE);
+    $rating->questions_answered = count(WebformRating::getFilledComponents($submission, $rating_components));
+    $rating->total_questions = count($rating_components);
 
     // And save the rating.
     $update = webform_rating_save_rating($rating);

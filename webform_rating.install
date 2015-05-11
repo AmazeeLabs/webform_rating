@@ -47,6 +47,13 @@ function webform_rating_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'total_questions' => array(
+        'description' => 'How many questions has the webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'rating' => array(
         'description' => 'The current rating value.',
         'type' => 'float',
@@ -63,4 +70,11 @@ function webform_rating_schema() {
   );
 
   return $schema;
+}
+
+function webform_rating_update_7001() {
+  if (!db_field_exists('webform_rating_nodes', 'total_questions')) {
+    $schema = webform_rating_schema();
+    db_add_field('webform_rating_nodes', 'total_questions', $schema['webform_rating_nodes']['fields']['total_questions']);
+  }
 }
