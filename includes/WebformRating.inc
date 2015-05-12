@@ -217,4 +217,28 @@ class WebformRating {
     // If we are here, the user is allowed to rate.
     return TRUE;
   }
+
+  /**
+   * Returns an array with all the rating webforms on the site.
+   *
+   * The return array is an associtive array of node ids and node titles.
+   */
+  public static function getAllRatingWebforms() {
+    $query = db_select('webform', 'w');
+    $query->innerJoin('node', 'n', 'n.nid = w.nid');
+    $query->fields('n', array('nid', 'title', 'type'));
+    $query->condition('n.status', NODE_PUBLISHED);
+    $all_webforms = $query->execute()->fetchAll();
+    // From the set of all webform, we have to remove the ones for which the
+    // rating functionality is not enabled.
+    $rating_webforms = array();
+    foreach ($all_webforms as $nid => $row) {
+      if (!variable_get('webform_rating_node_' . $row->type, FALSE)) {
+        unset($all_webforms[$nid]);
+        continue;
+      }
+      $rating_webforms[$row->nid] = $row->title;
+    }
+    return $rating_webforms;
+  }
 }
