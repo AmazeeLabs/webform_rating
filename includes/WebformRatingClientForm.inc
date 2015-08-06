@@ -67,6 +67,10 @@ class WebformRatingClientForm {
         '#type' => 'value',
         '#value' => $target_nid,
       );
+      $form['rating_' . $node->nid] = array(
+        '#type' => 'hidden',
+        '#value' => $target_nid,
+      );
       $target_node = node_load($target_nid);
       $node_link = l($target_node->title, 'node/' . $target_node->nid, array('attributes' => array('target'=>'_blank')));
       $form['submitted']['target_node_title'] = array(
@@ -80,11 +84,82 @@ class WebformRatingClientForm {
         $form['actions']['submit']['#value'] = t('Save');
       }
 
+      // Get the current score. By default, we get the score of the $submission
+      // (if we have any), but in case we have values in the $form_state which
+      // were submitted, then we build a temporary submission object out of
+      // those values and compute the score.
+      if (!empty($form_state['input']['_triggering_element_name']) && !empty($form_state['values']['submitted'])) {
+        $cloned_form_state = $form_state;
+        $cloned_form_state['values']['submitted'] = _webform_client_form_submit_flatten($form['#node'], $cloned_form_state['values']['submitted']);
+        $temporary_submission = webform_submission_create($node, $user, $cloned_form_state);
+        $current_score = WebformRating::getScore($temporary_submission);
+      }
+      else {
+        $current_score = !empty($submission) ? WebformRating::getScore($submission) : 0;
+      }
+
+      $form['actions']['score'] = array(
+        '#type' => 'item',
+        '#name' => 'score',
+        '#markup' => '<span class="score-title">'. t('Score:') . '</span><span>' . $current_score .'</span>',
+        '#weight' => -50,
+        // These are used by the WebformRatingClientForm::webformClientAjaxScoreUpdateAttach().
+        '#prefix' => '<div id="score-wrapper">',
+        '#suffix' => '</div>'
+      );
+      // Attach the ajax behaviors on the form elements which are used for
+      // rating.
+      WebformRatingClientForm::webformClientAjaxScoreUpdateAttach($form['submitted']);
       return $form;
     }
     else {
       return webform_client_form($form, $form_state, $node, $submission, $is_draft, $filter);
     }
+  }
+
+  /**
+   * Recursively attaches the ajax score update behavior on the rating form
+   * components.
+   */
+  public static function webformClientAjaxScoreUpdateAttach(&$elements) {
+    // If the current element is a rating component and there is not already
+    // an '#ajax' defined, we define it. We do not want however to overwrite
+    // any previous ajax behavior since updating the score on the fly is nots
+    // such a critical feature.
+    if (WebformRatingClientForm::isRatingComponent($elements) && empty($elements['#ajax'])) {
+      $elements['#ajax'] = array(
+        'callback' => 'webform_rating_update_score',
+        'wrapper' => 'score-wrapper',
+        'progress' => 'none',
+      );
+    }
+    elseif (!empty($elements)) {
+      // Attach the behavior on all the children.
+      foreach (element_children($elements) as $fied_name) {
+        WebformRatingClientForm::webformClientAjaxScoreUpdateAttach($elements[$fied_name]);
+      }
+    }
+  }
+
+  /**
+   * Checks if a form component is a rating component.
+   *
+   * @param  array $form_component
+   *  The form component to check.
+   *
+   * @return bool
+   */
+  public static function isRatingComponent($form_component) {
+    // A form component is a rating component if:
+    // 1. It is of type 'select' (so there are options to choose from.
+    // 2. It has actually items to rate.
+    // 3. The 'rating component' setting is checked.
+    if (!empty($form_component['#webform_component']) && $form_component['#webform_component']['type'] == 'select' &&
+        !empty($form_component['#webform_component']['extra']['items_rating']) &&
+        !empty($form_component['#webform_component']['extra']['rating_component'])) {
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**

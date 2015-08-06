@@ -430,3 +430,11 @@ function webform_rating_webform_results_download_submission_information_data($to
 function webform_rating_rating_author_options() {
   return array('***CURRENT_USER***' => t('Current logged in user'));
 }
+
+/**
+ * Ajax callback for the rating elements which will just update the score on the
+ * rating forms.
+ */
+function webform_rating_update_score($form, $form_state) {
+  return $form['actions']['score'];
+}
