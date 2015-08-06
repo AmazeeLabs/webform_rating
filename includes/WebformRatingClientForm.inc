@@ -101,7 +101,7 @@ class WebformRatingClientForm {
       $form['actions']['score'] = array(
         '#type' => 'item',
         '#name' => 'score',
-        '#markup' => '<span class="score-title">'. t('Score:') . '</span><span>' . $current_score .'</span>',
+        '#markup' => '<span class="score-title">'. t('Score:') . '</span><span class="score-value">' . $current_score .'</span>',
         '#weight' => -50,
         // These are used by the WebformRatingClientForm::webformClientAjaxScoreUpdateAttach().
         '#prefix' => '<div id="score-wrapper">',
